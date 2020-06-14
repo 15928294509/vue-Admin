@@ -10,7 +10,7 @@ NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
 const whiteList = ['/login'] // no redirect whitelist
 
-router.beforeEach(async(to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   // start progress bar
   NProgress.start()
 
@@ -19,30 +19,39 @@ router.beforeEach(async(to, from, next) => {
 
   // determine whether the user has logged in
   const hasToken = getToken()
-
   if (hasToken) {
-    if (to.path === '/login') {
-      // if is logged in, redirect to the home page
-      next({ path: '/' })
-      NProgress.done()
-    } else {
-      const hasGetUserInfo = store.getters.name
-      if (hasGetUserInfo) {
-        next()
-      } else {
-        try {
-          // get user info
-          await store.dispatch('user/getInfo')
-
-          next()
-        } catch (error) {
-          // remove token and go to login page to re-login
-          await store.dispatch('user/resetToken')
-          Message.error(error || 'Has Error')
-          next(`/login?redirect=${to.path}`)
-          NProgress.done()
+    try {
+      // get user info
+      const response = await store.dispatch('user/getInfo')
+      const rulelst = response.rulelst;
+      const rule_ids = (response.userinfo.rule_ids).split(",");
+      const ruleObj = {};
+      //筛选出当前用户的权限路径
+      const pathlist = rulelst.reduce((pre, rule) => {
+        ruleObj[rule.name] = rule.id;
+        if (rule_ids.includes(rule.id + "")) {
+          pre.push(rule.name);
         }
+        return pre;
+      }, []);
+      if (ruleObj[to.path]) {
+        if (pathlist.indexOf(to.path) !== -1) {
+          next();
+        } else {
+          Message.error("无权访问");
+          next("/dashboard");
+        }
+      } else {
+        next();
       }
+
+      NProgress.done()
+    } catch (error) {
+      // remove token and go to login page to re-login
+      await store.dispatch('user/resetToken')
+      Message.error(error || 'Has Error')
+      next(`/login?redirect=${to.path}`)
+      NProgress.done()
     }
   } else {
     /* has no token*/
