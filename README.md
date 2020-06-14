@@ -10,7 +10,7 @@
 
 技术栈：vue全家桶、thinkjs框架
 
-服务端地址:https://github.com/15928294509/ThinkJS-JWT-
+服务端地址:https://github.com/15928294509/ThinkJS-JWT-mallserver
 
 学习目的:
 * 重点学习使用JWT在用户和服务器之间传递信息
